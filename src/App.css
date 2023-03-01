@@ -18,20 +18,16 @@
   border-top: var(--border);
 }
 
-.App > .row > .type {
-  width: 50%;
-}
-
-.App > .row > .file {
-  width: 50%;
-}
-
 .App > .row.collide {
   padding-top: calc(var(--padding) * 3);
   border-bottom: none;
 }
 
-.App > .row > .type > .loop-count {
+.App > .row > .column {
+  width: 33.3%;
+}
+
+input[type="number"] {
   --margin: var(--padding);
   margin-left: var(--margin);
   margin-right: var(--margin);

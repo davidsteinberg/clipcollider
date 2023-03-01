@@ -5,8 +5,6 @@ import { ChangeEventHandler, useRef, useState } from "react";
 const clipNamesByType = {
   englishPhrase: "English phrase",
   spanishPhrase: "Spanish phrase",
-  englishLoopInstructions: "English loop instructions",
-  englishExampleInstructions: "English example instructions",
   example1: "Example 1",
   example2: "Example 2",
   example3: "Example 3",
@@ -14,43 +12,114 @@ const clipNamesByType = {
 
 type ClipType = keyof typeof clipNamesByType;
 
+type Item = {
+  displayName: string;
+  key: string;
+  type?: "file" | "repeat";
+};
+
+const spanishPhraseLooped: Item = {
+  displayName: "Spanish phrase looped",
+  key: "spanishPhrase",
+  type: "repeat",
+};
+
+const order: Item[] = [
+  {
+    displayName: "English phrase",
+    key: "englishPhrase",
+    type: "file",
+  },
+  {
+    displayName: "Spanish phrase",
+    key: "spanishPhrase",
+    type: "file",
+  },
+  {
+    displayName: "English loop instructions",
+    key: "englishLoopInstructions",
+  },
+  spanishPhraseLooped,
+  {
+    displayName: "English example instructions part 1",
+    key: "englishExampleInstructions1",
+  },
+  {
+    displayName: "Spanish phrase",
+    key: "spanishPhrase",
+  },
+  {
+    displayName: "English example instructions part 2",
+    key: "englishExampleInstructions2",
+  },
+  {
+    displayName: "Example 1 intro",
+    key: "ejemplo1",
+  },
+  {
+    displayName: "Example 1",
+    key: "example1",
+    type: "file",
+  },
+  {
+    displayName: "Example 2 intro",
+    key: "ejemplo2",
+  },
+  {
+    displayName: "Example 2",
+    key: "example2",
+    type: "file",
+  },
+  {
+    displayName: "Example 3 intro",
+    key: "ejemplo3",
+  },
+  {
+    displayName: "Example 3",
+    key: "example3",
+    type: "file",
+  },
+  {
+    displayName: "English phrase",
+    key: "englishPhrase",
+  },
+  spanishPhraseLooped,
+];
+
 const App = () => {
+  // Loop Counts
   const [loopCount, setLoopCount] = useState(3);
-  const refs: Record<ClipType, React.RefObject<HTMLInputElement>> = {
-    englishPhrase: useRef<HTMLInputElement>(null),
-    spanishPhrase: useRef<HTMLInputElement>(null),
-    englishLoopInstructions: useRef<HTMLInputElement>(null),
-    englishExampleInstructions: useRef<HTMLInputElement>(null),
-    example1: useRef<HTMLInputElement>(null),
-    example2: useRef<HTMLInputElement>(null),
-    example3: useRef<HTMLInputElement>(null),
-  };
+  const [spaces, setSpaces] = useState(Array.from(order).map(() => 0));
 
   const onLoopCountChange: ChangeEventHandler = (event) => {
     const input = event.target as HTMLInputElement;
     setLoopCount(Number(input.value));
   };
 
+  // Refs
+  const refs = {
+    englishPhrase: useRef<HTMLInputElement>(null),
+    spanishPhrase: useRef<HTMLInputElement>(null),
+    example1: useRef<HTMLInputElement>(null),
+    example2: useRef<HTMLInputElement>(null),
+    example3: useRef<HTMLInputElement>(null),
+  };
+
   const processFiles = () => {
     Tone.start();
 
-    const loopOrder = Array.from({ length: loopCount }).map(
-      () => "spanishPhrase" as ClipType
-    );
+    const fullSpaces = [...spaces];
+    const spanishPhraseSpace = spaces[1];
 
-    const order: ClipType[] = [
-      // 1. English phrase
-      "englishPhrase",
-      "spanishPhrase",
-      "englishLoopInstructions",
-      ...loopOrder,
-      "englishExampleInstructions",
-      "example1",
-      "example2",
-      "example3",
-      "englishPhrase",
-      ...loopOrder,
-    ];
+    for (let i = 1; i < loopCount; i++) {
+      order.splice(-1, 0, spanishPhraseLooped);
+      fullSpaces.splice(-1, 0, spanishPhraseSpace);
+    }
+
+    for (let i = 1; i < loopCount; i++) {
+      order.splice(3, 0, spanishPhraseLooped);
+      fullSpaces.splice(3, 0, spanishPhraseSpace);
+    }
 
     const clips: Tone.Player[] = [];
     const output = new Tone.Volume(0).toDestination();
@@ -95,7 +164,11 @@ const App = () => {
         }
 
         const player = clips[index];
-        player.onstop = playNext;
+        player.onstop = () => {
+          const secondsOfSilence = fullSpaces[index];
+          setTimeout(playNext, secondsOfSilence * 1000);
+        };
+
         player.start();
       };
 
@@ -110,43 +183,59 @@ const App = () => {
       }
     };
 
-    for (const type of order) {
-      const files = refs[type].current!.files;
-      if (files === null || files.length === 0) {
-        alert(`Missing ${clipNamesByType[type]}`);
-        return;
+    for (const { key } of order) {
+      let player: Tone.Player;
+
+      if (key in refs) {
+        const clipType = key as ClipType;
+        const files = refs[clipType].current!.files;
+
+        if (files === null || files.length === 0) {
+          alert(`Missing ${clipNamesByType[clipType]}`);
+          return;
+        }
+
+        const file = files[0];
+        const url = URL.createObjectURL(file);
+
+        player = new Tone.Player(url, onload);
+      } else {
+        const url = `audio/${key}.mp3`;
+        player = new Tone.Player({
+          url,
+          onload,
+          onerror(error) {
+            alert(`Something went wrong for file ${url}! ${error}`);
+            return;
+          },
+        });
       }
 
-      const file = files[0];
-      const url = URL.createObjectURL(file);
-      const player = new Tone.Player(url, onload);
       player.connect(output);
-
       clips.push(player);
     }
-
-    // const reader = new FileReader();
-    // reader.onload = function(e) {
-    //   console.log(e.target.result);
-    //   playSound(e.target.result);
-    // };
-    // reader.readAsArrayBuffer(file);
   };
 
   return (
     <div className="App">
       <h2>The Clip Collider</h2>
-      {Object.entries(clipNamesByType).map(([type, name], key) => {
+      {order.map((item, index) => {
+        const { key, type } = item;
         return (
-          <div key={key} className="row">
-            <div className="type">
-              {name}
-              {type === "spanishPhrase" ? (
+          <div key={index} className="row">
+            <div className="column">{item.displayName}</div>
+            <div className="column">
+              {type === "file" ? (
+                <input
+                  ref={key in refs ? refs[key as ClipType] : null}
+                  type="file"
+                />
+              ) : type === "repeat" ? (
                 <>
                   <input
-                    className="loop-count"
                     type="number"
-                    min={1}
+                    min={0}
+                    step={1}
                     value={loopCount}
                     onChange={onLoopCountChange}
                   />
@@ -154,8 +243,21 @@ const App = () => {
                 </>
               ) : null}
             </div>
-            <div className="file">
-              <input ref={refs[type as ClipType]} type="file" />
+            <div className="column">
+              then
+              <input
+                type="number"
+                min={0}
+                step={0.1}
+                value={spaces[index]}
+                onChange={(event) => {
+                  const input = event.target as HTMLInputElement;
+                  const newSpaces = [...spaces];
+                  newSpaces[index] = Number(input.value);
+                  setSpaces(newSpaces);
+                }}
+              />{" "}
+              seconds of space
             </div>
           </div>
         );
