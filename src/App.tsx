@@ -13,15 +13,21 @@ const clipNamesByType = {
 type ClipType = keyof typeof clipNamesByType;
 
 type Item = {
-  displayName: string;
+  displayName?: string;
   key: string;
-  type?: "file" | "repeat";
+  type?: "file" | "count1" | "count2";
 };
 
-const spanishPhraseLooped: Item = {
+const spanishPhraseLooped1: Item = {
   displayName: "Spanish phrase looped",
   key: "spanishPhrase",
-  type: "repeat",
+  type: "count1",
+};
+
+const spanishPhraseLooped2: Item = {
+  displayName: "Spanish phrase looped",
+  key: "spanishPhrase",
+  type: "count2",
 };
 
 const order: Item[] = [
@@ -36,16 +42,13 @@ const order: Item[] = [
     type: "file",
   },
   {
-    displayName: "English loop instructions",
     key: "englishLoopInstructions",
   },
-  spanishPhraseLooped,
+  spanishPhraseLooped1,
   {
-    displayName: "English example instructions part 1",
     key: "englishExampleInstructions1",
   },
   {
-    displayName: "Spanish phrase",
     key: "spanishPhrase",
   },
   {
@@ -53,7 +56,6 @@ const order: Item[] = [
     key: "englishExampleInstructions2",
   },
   {
-    displayName: "Example 1 intro",
     key: "ejemplo1",
   },
   {
@@ -62,7 +64,6 @@ const order: Item[] = [
     type: "file",
   },
   {
-    displayName: "Example 2 intro",
     key: "ejemplo2",
   },
   {
@@ -71,7 +72,6 @@ const order: Item[] = [
     type: "file",
   },
   {
-    displayName: "Example 3 intro",
     key: "ejemplo3",
   },
   {
@@ -80,20 +80,25 @@ const order: Item[] = [
     type: "file",
   },
   {
-    displayName: "English phrase",
     key: "englishPhrase",
   },
-  spanishPhraseLooped,
+  spanishPhraseLooped2,
 ];
 
 const App = () => {
   // Loop Counts
-  const [loopCount, setLoopCount] = useState(3);
+  const [loopCount1, setLoopCount1] = useState(3);
+  const [loopCount2, setLoopCount2] = useState(3);
   const [spaces, setSpaces] = useState(Array.from(order).map(() => 0));
 
-  const onLoopCountChange: ChangeEventHandler = (event) => {
+  const onLoopCount1Change: ChangeEventHandler = (event) => {
     const input = event.target as HTMLInputElement;
-    setLoopCount(Number(input.value));
+    setLoopCount1(Number(input.value));
+  };
+
+  const onLoopCount2Change: ChangeEventHandler = (event) => {
+    const input = event.target as HTMLInputElement;
+    setLoopCount2(Number(input.value));
   };
 
   // Refs
@@ -108,16 +113,17 @@ const App = () => {
   const processFiles = () => {
     Tone.start();
 
+    const fullOrder = [...order];
     const fullSpaces = [...spaces];
     const spanishPhraseSpace = spaces[1];
 
-    for (let i = 1; i < loopCount; i++) {
-      order.splice(-1, 0, spanishPhraseLooped);
+    for (let i = 1; i < loopCount2; i++) {
+      fullOrder.splice(-1, 0, spanishPhraseLooped2);
       fullSpaces.splice(-1, 0, spanishPhraseSpace);
     }
 
-    for (let i = 1; i < loopCount; i++) {
-      order.splice(3, 0, spanishPhraseLooped);
+    for (let i = 1; i < loopCount1; i++) {
+      fullOrder.splice(3, 0, spanishPhraseLooped1);
       fullSpaces.splice(3, 0, spanishPhraseSpace);
     }
 
@@ -183,7 +189,7 @@ const App = () => {
       }
     };
 
-    for (const { key } of order) {
+    for (const { key } of fullOrder) {
       let player: Tone.Player;
 
       if (key in refs) {
@@ -220,24 +226,39 @@ const App = () => {
     <div className="App">
       <h2>The Clip Collider</h2>
       {order.map((item, index) => {
-        const { key, type } = item;
+        const { displayName, key, type } = item;
+        if (displayName === undefined) {
+          return null;
+        }
+
         return (
           <div key={index} className="row">
-            <div className="column">{item.displayName}</div>
+            <div className="column">{displayName}</div>
             <div className="column">
               {type === "file" ? (
                 <input
                   ref={key in refs ? refs[key as ClipType] : null}
                   type="file"
                 />
-              ) : type === "repeat" ? (
+              ) : type === "count1" ? (
                 <>
                   <input
                     type="number"
                     min={0}
                     step={1}
-                    value={loopCount}
-                    onChange={onLoopCountChange}
+                    value={loopCount1}
+                    onChange={onLoopCount1Change}
+                  />
+                  times
+                </>
+              ) : type === "count2" ? (
+                <>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={loopCount2}
+                    onChange={onLoopCount2Change}
                   />
                   times
                 </>
