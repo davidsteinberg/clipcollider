@@ -128,8 +128,8 @@ const App = () => {
     example3: useRef<HTMLInputElement>(null),
   };
 
-  const processFiles = () => {
-    Tone.start();
+  const processFiles = async () => {
+    await Tone.start();
 
     const clips: Tone.Player[] = [];
     const output = new Tone.Volume(0).toDestination();
