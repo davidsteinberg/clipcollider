@@ -1,36 +1,7 @@
 .App {
   --padding: 0.5rem;
-  --border: 1px solid lightgray;
 }
 
 .App > h2 {
   padding: var(--padding);
-}
-
-.App > .row {
-  padding: var(--padding);
-  border-bottom: var(--border);
-  display: flex;
-  flex-direction: row;
-}
-
-.App > .row:first-of-type {
-  border-top: var(--border);
-}
-
-.App > .row.collide {
-  padding-top: calc(var(--padding) * 3);
-  border-bottom: none;
-}
-
-.App > .row > .column {
-  width: 33.3%;
-}
-
-input[type="number"] {
-  --margin: var(--padding);
-  margin-left: var(--margin);
-  margin-right: var(--margin);
-  transform: translateY(-2px);
-  width: 3rem;
 }

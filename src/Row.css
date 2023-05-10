@@ -1,0 +1,20 @@
+.Row {
+  --border: 1px solid lightgray;
+  padding: var(--padding);
+  border-bottom: var(--border);
+  display: flex;
+  flex-direction: row;
+}
+
+.Row:first-of-type {
+  border-top: var(--border);
+}
+
+.Row:last-of-type {
+  padding-top: calc(var(--padding) * 3);
+  border-bottom: none;
+}
+
+.Row > .column {
+  width: 50%;
+}
