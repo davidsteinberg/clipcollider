@@ -1,12 +1,14 @@
 import * as Tone from "tone";
+import levelVolumes from "./levelVolumes";
 import order from "./order";
 import record from "./record";
 
 const processFiles = async (p: {
+  autoLevel: boolean;
   name: string;
   urls: Record<string, string>;
 }) => {
-  const { name, urls } = p;
+  const { autoLevel, name, urls } = p;
 
   // Make sure Tone.js is ready to go
   await Tone.start();
@@ -18,15 +20,22 @@ const processFiles = async (p: {
   // The first number comes from the number of files in public/audio
   let count = 12 + Object.values(urls).length;
 
-  // After all players have been loaded, record
-  const onload = () => {
+  // After all players have been loaded,
+  // level volumes and record
+  const onload = async () => {
     count -= 1;
     if (count === 0) {
-      record({
+      const p = {
         output,
         name,
         clips,
-      });
+      };
+
+      if (autoLevel) {
+        await levelVolumes(p);
+      }
+
+      record(p);
     }
   };
 

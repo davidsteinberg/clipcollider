@@ -2,11 +2,13 @@ import "./App.css";
 import Row from "./Row";
 import clipNamesByType, { ClipType } from "./clipNamesByType";
 import processFiles from "./processFiles";
-import { useRef, useState } from "react";
+import { ChangeEventHandler, useRef, useState } from "react";
 
 const App = () => {
   // Downloaded file name
-  const [name, setName] = useState("name");
+  const [name, setName] = useState("clip");
+  // Auto-level flag
+  const [autoLevel, setAutoLevel] = useState(false);
 
   // Refs to file inputs
   const refs = {
@@ -38,9 +40,15 @@ const App = () => {
 
     // Pass off file name and urls
     processFiles({
+      autoLevel,
       name,
       urls,
     });
+  };
+
+  // Toggle auto-level
+  const toggleAutoLevel: ChangeEventHandler<HTMLInputElement> = (event) => {
+    setAutoLevel(event.target.checked);
   };
 
   return (
@@ -68,6 +76,11 @@ const App = () => {
           </Row>
         );
       })}
+
+      {/* Auto-level toggle */}
+      <Row name="">
+        <input type="checkbox" onInput={toggleAutoLevel} /> Auto-level
+      </Row>
 
       {/* Collide button */}
       <Row name="">
